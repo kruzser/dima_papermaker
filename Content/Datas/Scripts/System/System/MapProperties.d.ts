@@ -69,7 +69,3 @@ declare class MapProperties extends Base {
     close(): void;
 }
 export { MapProperties };
-kRandomBattle(): void;
-    close(): void;
-}
-export { MapProperties };

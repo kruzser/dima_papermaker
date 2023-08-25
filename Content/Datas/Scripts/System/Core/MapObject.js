@@ -72,7 +72,6 @@ class MapObject {
         if (!this.isHero) {
             this.initializeProperties();
         }
-        this.initializeTimeEvents();
     }
     /**
      *  Search an object in the map.
@@ -174,10 +173,12 @@ class MapObject {
         }
         // If not moving, search directly in portion
         let localPortion = Scene.Map.current.getLocalPortion(globalPortion);
-        let mapPortion;
         if (Scene.Map.current.isInPortion(localPortion)) {
-            mapPortion = Scene.Map.current.getMapPortionFromPortion(localPortion);
-            let objects = mapPortion.objectsList;
+            const mapPortion = Scene.Map.current.getMapPortionFromPortion(localPortion);
+            if (!mapPortion) {
+                return null;
+            }
+            const objects = mapPortion.objectsList;
             for (i = 0, l = objects.length; i < l; i++) {
                 if (objects[i].system.id === objectID) {
                     moved = objects[i];
@@ -234,7 +235,7 @@ class MapObject {
         let globalPortion = position.getGlobalPortion();
         let mapsDatas = Game.current.getPortionDatas(Scene.Map.current.id, globalPortion);
         let json = await IO.parseFileJSON(Paths.FILE_MAPS + Scene.Map.current
-            .mapProperties.name + Constants.STRING_SLASH + globalPortion.getFileName());
+            .mapFilename + Constants.STRING_SLASH + globalPortion.getFileName());
         let mapPortion = new MapPortion(globalPortion);
         let moved = mapPortion.getObjFromID(json, objectID);
         if (moved === null) {
@@ -347,7 +348,7 @@ class MapObject {
      *  Initialize time events (reactions to event time).
      */
     initializeTimeEvents() {
-        let l = this.system.timeEvents.length;
+        const l = this.system.timeEvents.length;
         this.timeEventsEllapsed = new Array(l);
         for (let i = 0; i < l; i++) {
             this.timeEventsEllapsed[i] = [this.system.timeEvents[i], new Date()
@@ -358,6 +359,9 @@ class MapObject {
      *  Update time events.
      */
     updateTimeEvents() {
+        if (!this.timeEventsEllapsed) {
+            return;
+        }
         // First run detection state
         if (this.currentState && this.currentState.detection !== null) {
             this.currentState.detection.update(null, this, null);
@@ -432,6 +436,10 @@ class MapObject {
                 break;
             }
         }
+        // Reinitialize time events chrono
+        if (previousStateInstance !== this.currentStateInstance) {
+            this.initializeTimeEvents();
+        }
         // Remove previous mesh
         this.removeFromScene();
         // Update mesh
@@ -452,6 +460,9 @@ class MapObject {
                     .current.textureTileset : Scene.Map.current
                     .texturesCharacters[this.currentStateInstance.graphicID];
             }
+        }
+        if (material && this.isHero) { // For opacity purposes
+            material = Manager.GL.cloneMaterial(material);
         }
         this.meshBoundingBox = new Array;
         let texture = Manager.GL.getMaterialTexture(material);

@@ -144,6 +144,3 @@ declare class SpecialElements {
     static checkPictureSize(type: string, name: string, w: number, h: number, cw: number, ch: number, strictw: boolean, stricth: boolean): void;
 }
 export { SpecialElements };
-ctw: boolean, stricth: boolean): void;
-}
-export { SpecialElements };
